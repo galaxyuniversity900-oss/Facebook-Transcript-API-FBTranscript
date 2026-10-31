@@ -32,6 +32,10 @@ The Whisper setup compiles whisper.cpp locally and downloads a model. It require
 - Optional second-pass translation of the recognized speech into English. Original transcript is retained separately. Whisper built-in translation targets English only; arbitrary target languages require a separately configured translation provider.
 - Timestamps, TXT/JSON/SRT/VTT/HTML export.
 - SQLite history at ~/.fbtranscript/jobs.sqlite3, batch jobs, retry, and recovery.
+- Multi-profile extraction: tries multiple yt-dlp audio/video format strategies with retries before reporting extraction failure.
+- Recognition fallback chain: native whisper.cpp first, optional faster-whisper next when installed, then configured hosted Whisper-compatible providers (Groq and/or OpenAI). Each provider is attempted only when its credentials are configured.
+- Hosted fallback is optional and sends the downloaded audio to the configured provider; local-only processing remains the default when no API key is set.
+- Hosted recognition can preserve provider segment timestamps when returned. Some providers return only full-text results, in which case the transcript is represented as one segment.
 - One background worker to limit phone CPU and memory use.
 - No root access and no APK required; the UI runs locally in the Android browser.
 
@@ -53,6 +57,22 @@ Optional desktop faster-whisper:
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --format srt -o output.srt
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --translate-to en --format json
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --captions-only --format json
+
+### Optional hosted recognition providers
+
+Local engines require no API key. To enable a remote fallback when local engines are unavailable, configure one or both providers in Termux before starting the app:
+
+    export GROQ_API_KEY="your_groq_api_key"
+    # or
+    export OPENAI_API_KEY="your_openai_api_key"
+
+Optional model overrides:
+
+    export FBTRANSCRIPT_GROQ_MODEL="whisper-large-v3-turbo"
+    export FBTRANSCRIPT_GROQ_TRANSLATION_MODEL="whisper-large-v3"
+    export FBTRANSCRIPT_OPENAI_MODEL="whisper-1"
+
+Groq is attempted before OpenAI when both keys are present. Audio is uploaded to the provider; review its privacy and retention terms before enabling it. Never place API keys in the repository or share them in logs.
 
 ## Authorized cookies
 
