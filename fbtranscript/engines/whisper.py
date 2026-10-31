@@ -1,5 +1,6 @@
 """Local speech recognition using whisper.cpp on Android or faster-whisper elsewhere."""
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -28,9 +29,10 @@ def _transcribe_whisper_cpp(url: str, language: str | None) -> Transcript:
         if converted.returncode != 0 or not wav.is_file():
             raise RuntimeError("Could not convert downloaded audio: " + converted.stderr[-1200:])
         prefix = root / "transcript"
-        command = [binary, "-m", str(model), "-f", str(wav), "-ovtt", "-of", str(prefix), "-t", os.getenv("FBTRANSCRIPT_WHISPER_THREADS", "2")]
-        if language:
-            command += ["-l", language]
+        # whisper.cpp otherwise defaults to English; pass auto explicitly for multilingual detection.
+        command = [binary, "-m", str(model), "-f", str(wav), "-ovtt", "-of", str(prefix),
+                   "-t", os.getenv("FBTRANSCRIPT_WHISPER_THREADS", "2"),
+                   "-l", language or "auto"]
         completed = subprocess.run(command, capture_output=True, text=True, timeout=7200)
         if completed.returncode != 0:
             raise RuntimeError("whisper.cpp failed: " + completed.stderr[-1600:])
@@ -40,7 +42,10 @@ def _transcribe_whisper_cpp(url: str, language: str | None) -> Transcript:
         segments = parse_vtt(vtt)
         if not segments:
             raise RuntimeError("No speech was recognized in the video's audio.")
-        return Transcript(source_url=url, title=info.get("title"), language=language or "und", source="whisper.cpp", segments=segments)
+        detected = re.search(r"auto-detected language:\s*([\w-]+)", completed.stderr + "\n" + completed.stdout, re.I)
+        detected_language = language or (detected.group(1).lower() if detected else "auto")
+        return Transcript(source_url=url, title=info.get("title"), language=detected_language,
+                          language_name=detected_language, source="whisper.cpp", segments=segments)
 
 def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = None) -> Transcript:
     if shutil.which(os.getenv("FBTRANSCRIPT_WHISPER_BIN", "whisper-cli")):
