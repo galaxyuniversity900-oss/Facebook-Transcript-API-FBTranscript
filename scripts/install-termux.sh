@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 REPO="https://github.com/galaxyuniversity900-oss/Facebook-Transcript-API-FBTranscript.git"
-BRANCH="android/termux-native-runtime"
+BRANCH="main"
 APP_DIR="${FBTRANSCRIPT_DIR:-$HOME/FBTranscript}"
 
 echo "[1/5] Updating Termux packages..."
