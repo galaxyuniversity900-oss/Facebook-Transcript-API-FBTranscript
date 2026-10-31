@@ -25,6 +25,8 @@ class Transcript:
     source: str = "unknown"
     segments: list[Segment] | None = None
     warnings: list[str] | None = None
+    translated_text: str | None = None
+    translation_language: str | None = None
 
     def __post_init__(self):
         if self.segments is None:
