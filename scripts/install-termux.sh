@@ -21,7 +21,7 @@ fi
 echo "[3/5] Creating an isolated Python environment..."
 python -m venv "$APP_DIR/.venv"
 "$APP_DIR/.venv/bin/python" -m pip install --upgrade pip
-"$APP_DIR/.venv/bin/python" -m pip install --no-cache-dir "$APP_DIR"
+"$APP_DIR/.venv/bin/python" -m pip install --no-cache-dir --upgrade --force-reinstall "$APP_DIR"
 
 echo "[4/5] Creating launcher..."
 mkdir -p "$HOME/bin"
