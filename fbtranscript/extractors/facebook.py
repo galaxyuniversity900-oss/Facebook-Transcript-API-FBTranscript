@@ -8,8 +8,12 @@ from ..models import Segment, Transcript
 from ..security import validate_facebook_url
 
 def _seconds(value: str) -> float:
-    h, m, s = value.replace(",", ".").split(":")
-    return int(h) * 3600 + int(m) * 60 + float(s)
+    parts = value.replace(",", ".").split(":")
+    if len(parts) == 2:
+        minutes, seconds = parts
+        return int(minutes) * 60 + float(seconds)
+    hours, minutes, seconds = parts
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 def parse_vtt(path: Path) -> list[Segment]:
     text = path.read_text(encoding="utf-8", errors="replace")
