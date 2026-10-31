@@ -5,7 +5,6 @@ Configured only through environment variables; no provider is contacted unless a
 import json
 import os
 import tempfile
-import time
 import urllib.error
 import urllib.request
 from pathlib import Path
