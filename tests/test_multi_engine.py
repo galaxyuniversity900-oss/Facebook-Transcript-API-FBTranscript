@@ -69,12 +69,12 @@ def test_recognition_dispatch_uses_configured_hosted_fallback(monkeypatch):
     hosted = ModuleType("fbtranscript.engines.hosted")
     hosted.transcribe_hosted = lambda url, language, translate_to: Transcript(
         source_url=url,
-        source="Groq:whisper-large-v3-turbo",
+        source="NVIDIA:whisper:whisper-large-v3",
         segments=[Segment(start=0, duration=1, text="recognized")],
     )
     monkeypatch.setitem(sys.modules, "fbtranscript.engines.hosted", hosted)
 
     result = whisper.transcribe_audio("https://www.facebook.com/watch/?v=123")
-    assert result.source.startswith("Groq:")
+    assert result.source.startswith("NVIDIA:")
     assert result.text == "recognized"
     assert "faster-whisper: package is not installed" in result.warnings
