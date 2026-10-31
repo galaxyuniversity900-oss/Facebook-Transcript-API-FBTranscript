@@ -6,12 +6,12 @@ A local-first Facebook video transcription toolkit with a lightweight Android/Te
 
 ## Android / Termux (recommended lightweight mode)
 
-The Android runtime uses Python's standard-library HTTP server and SQLite. It does **not** install FastAPI, Uvicorn, Pydantic, Rust, or Whisper. This avoids several native-wheel/build problems common on Android.
+The Android runtime uses Python's standard-library HTTP server and SQLite. It does **not** install FastAPI, Uvicorn, Pydantic, Rust, FFmpeg, or Whisper. This avoids several native-wheel/build problems common on Android and keeps the default installation small.
 
 In Termux, run:
 
     pkg update -y
-    pkg install -y git python ffmpeg
+    pkg install -y git python
     git clone https://github.com/galaxyuniversity900-oss/Facebook-Transcript-API-FBTranscript.git
     cd Facebook-Transcript-API-FBTranscript
     bash scripts/install-termux.sh
@@ -26,16 +26,17 @@ Open in the Android browser:
 
 Keep the Termux session open while using the app. Stop the server with Ctrl+C. The launcher uses a local-only bind address by default; do not expose it to public networks.
 
-The installer can also be run directly from the cloned repository. It updates Termux packages, installs Python/Git/FFmpeg, installs the small Python package, and creates `~/bin/fbtranscript`.
+The installer creates an isolated Python virtual environment, installs only the lightweight package dependencies, and creates `~/bin/fbtranscript`.
 
 ## Android runtime behavior
 
-- Lightweight captions-first extraction; Whisper is disabled by default.
+- Lightweight captions-first extraction; Whisper is unchecked and disabled by default.
 - Existing browser interface, transcript history, batch queue, retry, and TXT/JSON/SRT/VTT/HTML export endpoints.
 - SQLite history stored at `~/.fbtranscript/jobs.sqlite3`.
-- One background transcription worker to limit phone CPU and memory usage.
+- One background transcription worker to limit phone CPU and memory use.
 - No root access and no Android APK required.
 - The Android server is local to the phone at `127.0.0.1`.
+- FFmpeg is not needed for caption extraction. Install it separately only if you later configure audio/Whisper fallback.
 
 ## Desktop / API installation
 
@@ -50,7 +51,7 @@ Open `http://127.0.0.1:8787`; API docs at `/docs`.
 
 ## Optional Whisper
 
-Whisper is intentionally not part of the Android install. It can require large native dependencies, model downloads, substantial storage, RAM, and CPU time. On supported desktop systems:
+Whisper is intentionally not part of the Android install. It can require native dependencies, FFmpeg, model downloads, substantial storage, RAM, and CPU time. On supported desktop systems:
 
     python -m pip install -e ".[whisper]"
 
