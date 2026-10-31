@@ -17,7 +17,7 @@ def _seconds(value: str) -> float:
 
 def parse_vtt(path: Path) -> list[Segment]:
     text = path.read_text(encoding="utf-8", errors="replace")
-    pattern = re.compile(r"(\d{2}:\d{2}:\d{2}\.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}\.\d{3})[^\n]*\n(.*?)(?=\n\s*\n|\Z)", re.S)
+    pattern = re.compile(r"((?:\d{2}:)?\d{2}:\d{2}\.\d{3})\s+-->\s+((?:\d{2}:)?\d{2}:\d{2}\.\d{3})[^\n]*\n(.*?)(?=\n\s*\n|\Z)", re.S)
     found = []
     for match in pattern.finditer(text):
         cue = re.sub(r"<[^>]+>", "", match.group(3))
