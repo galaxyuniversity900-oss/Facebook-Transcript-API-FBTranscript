@@ -30,4 +30,5 @@ def to_vtt(t: Transcript) -> str:
 def to_html(t: Transcript) -> str:
     title = html.escape(t.title or "Transcript")
     rows = "".join(f"<li><time>{stamp(s.start)}</time> {html.escape(s.text)}</li>" for s in t.segments)
-    return f"<!doctype html><html><meta charset=\"utf-8\"><title>{title}</title><h1>{title}</h1><ol>{rows}</ol></html>"
+    translation = (f"<h2>English translation</h2><p>{html.escape(t.translated_text)}</p>" if t.translated_text else "")
+    return f"<!doctype html><html><meta charset=\"utf-8\"><title>{title}</title><h1>{title}</h1><ol>{rows}</ol>{translation}</html>"
