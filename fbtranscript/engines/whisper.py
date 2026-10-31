@@ -87,25 +87,37 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
             errors.append(f"hosted providers: {type(exc).__name__}: {exc}")
         raise RuntimeError("No recognition engine completed successfully. " + " | ".join(errors) +
             ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; optional hosted fallback needs GROQ_API_KEY or OPENAI_API_KEY.") from None
-    with tempfile.TemporaryDirectory(prefix="fbtranscript-audio-") as tmp:
-        template = str(Path(tmp) / "audio.%(ext)s")
-        info = FacebookExtractor().download_audio(url, template)
-        audio = next((p for p in Path(tmp).iterdir() if p.is_file()), None)
-        if audio is None:
-            raise RuntimeError("Audio download produced no file.")
-        model = WhisperModel(model_size, device="cpu", compute_type="int8")
-        chunks, meta = model.transcribe(str(audio), language=language, vad_filter=True)
-        segments = [Segment(start=float(s.start), duration=max(0, float(s.end-s.start)), text=s.text.strip()) for s in chunks if s.text.strip()]
-        if not segments:
-            raise RuntimeError("No speech was recognized in the video's audio.")
-        translated_text = None
-        if translate_to:
-            if translate_to != "en":
-                raise ValueError("Whisper's built-in translation currently supports English only.")
-            translated_chunks, _ = model.transcribe(str(audio), language=language, task="translate", vad_filter=True)
-            translated_text = "\n".join(s.text.strip() for s in translated_chunks if s.text.strip()) or None
-        return Transcript(source_url=url, title=info.get("title"), language=meta.language or "und",
-                          language_name=meta.language, source=f"faster-whisper:{model_size}",
-                          segments=segments, warnings=["Recognition engine: faster-whisper"] + errors,
-                          translated_text=translated_text,
-                          translation_language="en" if translated_text else None)
+    try:
+        with tempfile.TemporaryDirectory(prefix="fbtranscript-audio-") as tmp:
+            template = str(Path(tmp) / "audio.%(ext)s")
+            info = FacebookExtractor().download_audio(url, template)
+            audio = next((p for p in Path(tmp).iterdir() if p.is_file()), None)
+            if audio is None:
+                raise RuntimeError("Audio download produced no file.")
+            model = WhisperModel(model_size, device="cpu", compute_type="int8")
+            chunks, meta = model.transcribe(str(audio), language=language, vad_filter=True)
+            segments = [Segment(start=float(s.start), duration=max(0, float(s.end-s.start)), text=s.text.strip()) for s in chunks if s.text.strip()]
+            if not segments:
+                raise RuntimeError("No speech was recognized in the video's audio.")
+            translated_text = None
+            if translate_to:
+                if translate_to != "en":
+                    raise ValueError("Whisper's built-in translation currently supports English only.")
+                translated_chunks, _ = model.transcribe(str(audio), language=language, task="translate", vad_filter=True)
+                translated_text = "\n".join(s.text.strip() for s in translated_chunks if s.text.strip()) or None
+            return Transcript(source_url=url, title=info.get("title"), language=meta.language or "und",
+                              language_name=meta.language, source=f"faster-whisper:{model_size}",
+                              segments=segments, warnings=["Recognition engine: faster-whisper"] + errors,
+                              translated_text=translated_text,
+                              translation_language="en" if translated_text else None)
+    
+    except Exception as exc:
+        errors.append(f"faster-whisper: {type(exc).__name__}: {exc}")
+        try:
+            from .hosted import transcribe_hosted
+            result = transcribe_hosted(url, language, translate_to)
+            result.warnings[:0] = errors
+            return result
+        except Exception as hosted_exc:
+            errors.append(f"hosted providers: {type(hosted_exc).__name__}: {hosted_exc}")
+        raise RuntimeError("All recognition engines failed: " + " | ".join(errors)) from None
