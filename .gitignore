@@ -33,3 +33,4 @@ google-services.json
 
 # Android Profiling
 *.hprof
+\n# Python environments and local data\n__pycache__/\n*.py[cod]\n*.egg-info/\n.venv/\nvenv/\n.env\n.pytest_cache/\n.ruff_cache/\ncookies.txt\n*.sqlite3\nmodels/\ndownloads/\n
