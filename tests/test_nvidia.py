@@ -41,6 +41,6 @@ def test_discovery_reads_speech_nim_metadata_model_profile(monkeypatch):
         {"modelInfo": [{"shortName": "parakeet-1-1b-ctc-riva:latest"}]},
     ]
     monkeypatch.setattr(hosted, "_http_json", lambda url, key: payloads.pop(0))
-    models = hosted.discover_asr_models("https://nim.example", "secret", "ar")
+    models = hosted.discover_asr_models("https://nim.example", "secret", "en")
     assert models == [{"id": "parakeet-1-1b-ctc-riva:latest",
                        "family": "parakeet-ctc", "rank": 31}]
