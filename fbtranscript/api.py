@@ -22,6 +22,7 @@ class TranscribeRequest(BaseModel):
     whisper: bool = True
     model_size: str = "small"
     language: str | None = None
+    translate_to: str | None = None
 
 class BatchRequest(BaseModel):
     urls: list[str] = Field(min_length=1, max_length=25)
@@ -29,6 +30,7 @@ class BatchRequest(BaseModel):
     whisper: bool = True
     model_size: str = "small"
     language: str | None = None
+    translate_to: str | None = None
 
 def _execute_job(job_id: str):
     job = store.get(job_id)
@@ -39,7 +41,7 @@ def _execute_job(job_id: str):
         payload = job["payload"]
         result = transcribe(payload["url"], languages=payload.get("languages"),
             whisper=payload.get("whisper", True), model_size=payload.get("model_size", "small"),
-            language=payload.get("language"))
+            language=payload.get("language"), translate_to=payload.get("translate_to"))
         store.update(job_id, "completed", result=result.model_dump())
     except Exception as exc:
         store.update(job_id, "failed", error=str(exc))
@@ -57,7 +59,7 @@ def create_transcript(request: TranscribeRequest):
     try:
         validate_facebook_url(request.url)
         return transcribe(request.url, languages=request.languages, whisper=request.whisper,
-            model_size=request.model_size, language=request.language).model_dump()
+            model_size=request.model_size, language=request.language, translate_to=request.translate_to).model_dump()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -130,7 +132,7 @@ def export_transcript(format_name: str, request: TranscribeRequest):
         raise HTTPException(status_code=404, detail="Supported formats: txt, json, srt, vtt, html.")
     try:
         result = transcribe(request.url, languages=request.languages, whisper=request.whisper,
-            model_size=request.model_size, language=request.language)
+            model_size=request.model_size, language=request.language, translate_to=request.translate_to)
         renderer, media_type = renderers[format_name]
         return Response(renderer(result), media_type=media_type)
     except ValueError as exc:
