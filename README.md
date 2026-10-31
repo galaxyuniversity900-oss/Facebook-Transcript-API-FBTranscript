@@ -35,7 +35,7 @@ The Whisper setup compiles whisper.cpp locally and downloads a model. It require
 - Multi-profile extraction: tries multiple yt-dlp audio/video format strategies with retries before reporting extraction failure.
 - Recognition fallback chain: native whisper.cpp first, optional faster-whisper next when installed, then configured NVIDIA Speech NIM ASR endpoints with endpoint-scoped model discovery. Each provider is attempted only when its credentials are configured.
 - NVIDIA fallback is optional and sends the downloaded audio to the configured Speech NIM endpoint; local-only processing remains the default when no API key is set.
-- Hosted recognition can preserve provider segment timestamps when returned. Some providers return only full-text results, in which case the transcript is represented as one segment.
+- NVIDIA Speech NIM currently returns full-text JSON in the documented HTTP interface, so the result is represented as one segment unless a future endpoint returns timing data.
 - One background worker to limit phone CPU and memory use.
 - No root access and no APK required; the UI runs locally in the Android browser.
 
@@ -58,22 +58,16 @@ Optional desktop faster-whisper:
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --translate-to en --format json
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --captions-only --format json
 
-### Optional NVIDIA Speech NIM recognition
+### NVIDIA Speech NIM recognition
 
-Local engines require no API key. To enable a remote fallback when local engines are unavailable, configure one or both providers in Termux before starting the app:
+Local engines require no API key. To enable NVIDIA cloud recognition as a fallback, configure an NVIDIA API key and one or more actual Speech NIM/NVCF ASR endpoint base URLs in Termux:
 
-    export GROQ_API_KEY="your_groq_api_key"
-    # or
-    export OPENAI_API_KEY="your_openai_api_key"
+    export NVIDIA_API_KEY="your_nvidia_api_key"
+    export FBTRANSCRIPT_NVIDIA_ASR_ENDPOINTS="https://YOUR-SPEECH-NIM-ENDPOINT"
 
-Optional model overrides:
+For multiple deployed ASR endpoints, separate the URLs with semicolons. The application queries each configured endpoint's `/v1/models` and `/v1/metadata` where supported, filters known ASR model families, ranks multilingual candidates ahead of language-limited models, and tries the next candidate when a request fails. A deployment that reports the generic model ID `unknown` is treated as model-selected by that endpoint.
 
-    export FBTRANSCRIPT_GROQ_MODEL="whisper-large-v3-turbo"
-    export FBTRANSCRIPT_GROQ_TRANSLATION_MODEL="whisper-large-v3"
-    export FBTRANSCRIPT_OPENAI_MODEL="whisper-1"
-
-Groq is attempted before OpenAI when both keys are present. Audio is uploaded to the provider; review its privacy and retention terms before enabling it. Never place API keys in the repository or share them in logs.
-
+Discovery is intentionally scoped to the endpoints you configure. It does not enumerate NVIDIA's entire public API Catalog, and a catalog model being listed does not mean a hosted endpoint is enabled for your account. NVIDIA Speech NIM uses multipart requests to `/v1/audio/transcriptions`; FFmpeg prepares the downloaded audio as mono 16 kHz WAV. Translation is a separate optional request, so the original transcript is preserved if translation is unavailable. Never place API keys in the repository or share them in logs.
 ## Authorized cookies
 
 Some videos may require an authenticated session. If you are authorized to view the content, set FBTRANSCRIPT_COOKIE_FILE to a Netscape-format cookies file. Treat it like a password; never commit or share it. This does not defeat access controls.
