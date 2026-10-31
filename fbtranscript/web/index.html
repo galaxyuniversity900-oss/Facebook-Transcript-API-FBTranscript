@@ -13,12 +13,12 @@
 <label for="url">Facebook video URL</label><div class="url-row">
 <input id="url" type="url" placeholder="https://www.facebook.com/watch/?v=..." required>
 <button id="submit" type="submit">Transcribe ↗</button></div>
-<div class="options"><label class="check"><input id="whisper" type="checkbox" checked> Use Whisper fallback</label>
+<details class="batch"><summary>Process multiple videos</summary><textarea id="batch-urls" rows="4" placeholder="Paste one Facebook video URL per line"></textarea></details><div class="options"><label class="check"><input id="whisper" type="checkbox" checked> Use Whisper fallback</label>
 <label for="language">Speech language</label><select id="language"><option value="">Auto detect</option><option value="ar">Arabic</option><option value="en">English</option></select></div>
 </form><p class="notice">Only process videos you own or are authorized to access. Private-content access and privacy bypass are not supported.</p></section>
 <section id="results" class="results" hidden><div class="result-head"><div><p class="eyebrow">TRANSCRIPT RESULT</p><h3 id="title">Transcript</h3></div>
 <select id="format"><option value="txt">TXT</option><option value="srt">SRT</option><option value="vtt">VTT</option><option value="json">JSON</option><option value="html">HTML</option></select></div>
 <div id="meta" class="meta"></div><div id="transcript" class="transcript"></div><p id="warnings" class="warnings"></p>
 <button id="copy" class="copy">Copy transcript</button></section>
-<footer>Runs on your own machine · No hosted transcription account required</footer>
+<section class="history"><div class="result-head"><h3>Recent jobs</h3><button id="refresh-history" class="copy" type="button">Refresh</button></div><div id="history-list"></div></section><footer>Runs on your own machine · No hosted transcription account required</footer>
 </main><script src="/static/script.js" defer></script></body></html>
