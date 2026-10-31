@@ -15,9 +15,10 @@ else
   git clone "$REPO" "$APP_DIR"
 fi
 
-echo "[3/5] Installing the lightweight Android runtime..."
-python -m pip install --upgrade pip
-python -m pip install --no-cache-dir -e "$APP_DIR"
+echo "[3/5] Creating an isolated Python environment..."
+python -m venv "$APP_DIR/.venv"
+"$APP_DIR/.venv/bin/python" -m pip install --upgrade pip
+"$APP_DIR/.venv/bin/python" -m pip install --no-cache-dir "$APP_DIR"
 
 echo "[4/5] Creating launcher..."
 mkdir -p "$HOME/bin"
@@ -26,7 +27,7 @@ cat > "$HOME/bin/fbtranscript" <<'LAUNCHER'
 set -Eeuo pipefail
 cd "${FBTRANSCRIPT_DIR:-$HOME/FBTranscript}"
 export PYTHONUNBUFFERED=1
-exec python -m fbtranscript.android
+exec "$PWD/.venv/bin/python" -m fbtranscript.android
 LAUNCHER
 chmod +x "$HOME/bin/fbtranscript"
 
