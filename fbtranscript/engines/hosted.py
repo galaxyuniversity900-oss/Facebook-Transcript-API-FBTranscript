@@ -71,9 +71,18 @@ def _family(model_id: str) -> tuple[str, dict] | None:
     name = model_id.lower()
     if any(token in name for token in _NON_ASR):
         return None
-    for family, meta in _ASR_FAMILIES.items():
-        if family in name:
-            return family, meta
+    if "whisper" in name:
+        return "whisper", _ASR_FAMILIES["whisper"]
+    if "canary" in name:
+        return "canary", _ASR_FAMILIES["canary"]
+    if "nemotron" in name and "asr" in name:
+        return "nemotron-asr", _ASR_FAMILIES["nemotron-asr"]
+    if "parakeet" in name and "tdt" in name:
+        return "parakeet-tdt-0.6b", _ASR_FAMILIES["parakeet-tdt-0.6b"]
+    if "parakeet" in name and "ctc" in name:
+        return "parakeet-ctc", _ASR_FAMILIES["parakeet-ctc"]
+    if "parakeet" in name and ("multilingual" in name or "rnnt" in name):
+        return "parakeet-1.1b-rnnt-multilingual", _ASR_FAMILIES["parakeet-1.1b-rnnt-multilingual"]
     return None
 
 
