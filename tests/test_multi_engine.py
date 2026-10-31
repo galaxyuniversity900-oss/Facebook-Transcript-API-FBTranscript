@@ -57,3 +57,24 @@ def test_audio_extractor_reports_all_profile_failures(monkeypatch, tmp_path):
         assert "profile 3" in str(exc)
     else:
         raise AssertionError("Expected all extraction profiles to fail")
+
+def test_recognition_dispatch_uses_configured_hosted_fallback(monkeypatch):
+    import sys
+    from types import ModuleType
+    from fbtranscript.engines import whisper
+    from fbtranscript.models import Segment, Transcript
+
+    monkeypatch.setattr(whisper.shutil, "which", lambda name: None)
+    monkeypatch.setitem(sys.modules, "faster_whisper", None)
+    hosted = ModuleType("fbtranscript.engines.hosted")
+    hosted.transcribe_hosted = lambda url, language, translate_to: Transcript(
+        source_url=url,
+        source="Groq:whisper-large-v3-turbo",
+        segments=[Segment(start=0, duration=1, text="recognized")],
+    )
+    monkeypatch.setitem(sys.modules, "fbtranscript.engines.hosted", hosted)
+
+    result = whisper.transcribe_audio("https://www.facebook.com/watch/?v=123")
+    assert result.source.startswith("Groq:")
+    assert result.text == "recognized"
+    assert "faster-whisper: package is not installed" in result.warnings
