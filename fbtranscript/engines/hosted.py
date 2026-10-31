@@ -11,7 +11,6 @@ import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from ..extractors.facebook import FacebookExtractor
 from ..models import Segment, Transcript
@@ -101,7 +100,7 @@ def discover_asr_models(base_url: str, api_key: str, language: str | None = None
     """Discover only models exposed by this configured NIM deployment."""
     base = base_url.rstrip("/")
     payload = {}
-    for url in (base + "/v1/models", base + "/v1/metadata"):
+    for url in (_api_url(base, "/v1/models"), _api_url(base, "/v1/metadata")):
         try:
             data = _http_json(url, api_key)
             payload.update(data)
@@ -205,21 +204,30 @@ def transcribe_nvidia(url: str, language: str | None = None,
                     raise RuntimeError("No compatible ASR model was discovered on this endpoint.")
                 for candidate in candidates:
                     try:
-                        result = _multipart(base, api_key, wav, language, candidate["id"], translate_to)
-                        text = str(result.get("text") or "").strip()
-                        if not text:
+                        result = _multipart(base, api_key, wav, language, candidate["id"])
+                        transcript_text = str(result.get("text") or "").strip()
+                        if not transcript_text:
                             raise RuntimeError("NVIDIA endpoint returned an empty transcript.")
                         duration = float(info.get("duration") or 0)
-                        segments = [Segment(start=0.0, duration=duration, text=text)]
+                        segments = [Segment(start=0.0, duration=duration, text=transcript_text)]
+                        translated_text = None
+                        warnings = [f"Recognition engine: NVIDIA Speech NIM ({candidate['family']})"]
+                        if translate_to:
+                            try:
+                                translated = _multipart(base, api_key, wav, language, candidate["id"], translate_to)
+                                translated_text = str(translated.get("text") or "").strip() or None
+                                if not translated_text:
+                                    warnings.append("NVIDIA translation returned an empty result.")
+                            except Exception as translation_error:
+                                warnings.append(f"NVIDIA translation unavailable: {type(translation_error).__name__}: {translation_error}")
                         return Transcript(
                             source_url=url, title=info.get("title"),
                             language=result.get("language") or language or "auto",
                             language_name=result.get("language") or language,
                             source=f"NVIDIA:{candidate['family']}:{candidate['id'] or 'deployed'}",
-                            segments=segments,
-                            warnings=[f"Recognition engine: NVIDIA Speech NIM ({candidate['family']})"],
-                            translated_text=text if translate_to else None,
-                            translation_language=translate_to if translate_to else None,
+                            segments=segments, warnings=warnings,
+                            translated_text=translated_text,
+                            translation_language=translate_to if translated_text else None,
                         )
                     except Exception as exc:
                         errors.append(f"{base} [{candidate['id'] or candidate['family']}]: {type(exc).__name__}: {exc}")
