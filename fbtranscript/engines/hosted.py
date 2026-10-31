@@ -16,7 +16,7 @@ from ..models import Segment, Transcript
 def _multipart_request(url: str, api_key: str, model: str, audio_path: Path,
                       language: str | None, translate: bool = False) -> dict:
     boundary = "----FBTranscriptBoundary7MA4YWxkTrZu0gW"
-    fields = {"model": model, "response_format": "json"}
+    fields = {"model": model, "response_format": "verbose_json"}
     if language:
         fields["language"] = language
     body = bytearray()
@@ -60,11 +60,21 @@ def transcribe_hosted(url: str, language: str | None = None,
         for name, key, model, base in providers:
             try:
                 endpoint = base.rstrip("/") + "/audio/transcriptions"
-                result = _multipart_request(endpoint, key, model, audio, language)
+                recognition_model = model
+                if translate_to and name == "Groq":
+                    recognition_model = os.getenv("FBTRANSCRIPT_GROQ_TRANSLATION_MODEL", "whisper-large-v3")
+                result = _multipart_request(endpoint, key, recognition_model, audio, language)
                 text = (result.get("text") or "").strip()
                 if not text:
                     raise RuntimeError("Provider returned an empty transcript.")
                 duration = float(info.get("duration") or 0)
+                raw_segments = result.get("segments") or []
+                segments = [
+                    Segment(start=float(item.get("start", 0)),
+                            duration=max(0.0, float(item.get("end", 0)) - float(item.get("start", 0))),
+                            text=str(item.get("text", "")).strip())
+                    for item in raw_segments if str(item.get("text", "")).strip()
+                ] or [Segment(start=0.0, duration=duration, text=text)]
                 translated_text = None
                 if translate_to:
                     if translate_to != "en":
@@ -77,7 +87,7 @@ def transcribe_hosted(url: str, language: str | None = None,
                     language=result.get("language") or language or "auto",
                     language_name=result.get("language") or language,
                     source=f"{name}:{model}",
-                    segments=[Segment(start=0.0, duration=duration, text=text)],
+                    segments=segments,
                     warnings=[f"Recognition engine: hosted {name}"],
                     translated_text=translated_text,
                     translation_language="en" if translated_text else None,
