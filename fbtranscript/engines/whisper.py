@@ -84,9 +84,9 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
             result.warnings[:0] = errors
             return result
         except Exception as exc:
-            errors.append(f"hosted providers: {type(exc).__name__}: {exc}")
+            errors.append(f"NVIDIA Speech NIM: {type(exc).__name__}: {exc}")
         raise RuntimeError("No recognition engine completed successfully. " + " | ".join(errors) +
-            ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; optional hosted fallback needs GROQ_API_KEY or OPENAI_API_KEY.") from None
+            ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; optional NVIDIA fallback needs NVIDIA_API_KEY and FBTRANSCRIPT_NVIDIA_ASR_ENDPOINTS.") from None
     try:
         with tempfile.TemporaryDirectory(prefix="fbtranscript-audio-") as tmp:
             template = str(Path(tmp) / "audio.%(ext)s")
@@ -119,5 +119,5 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
             result.warnings[:0] = errors
             return result
         except Exception as hosted_exc:
-            errors.append(f"hosted providers: {type(hosted_exc).__name__}: {hosted_exc}")
+            errors.append(f"NVIDIA Speech NIM: {type(hosted_exc).__name__}: {hosted_exc}")
         raise RuntimeError("All recognition engines failed: " + " | ".join(errors)) from None
