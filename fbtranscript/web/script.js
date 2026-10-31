@@ -61,7 +61,7 @@ function render(data){
 }
 function stamp(n){const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=Math.floor(n%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")}
 document.querySelector("#copy").addEventListener("click",async function(){
- if(!current)return;await navigator.clipboard.writeText(current.segments.map(s=>s.text).join("\n"));
+ if(!current)return;await navigator.clipboard.writeText(current.segments.map(s=>s.text).join("\n")+(current.translated_text?"\n\n[English translation]\n"+current.translated_text:""));
  document.querySelector("#copy").textContent="Copied";
 });
 document.querySelector("#format").addEventListener("change",function(event){
