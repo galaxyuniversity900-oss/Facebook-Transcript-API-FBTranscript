@@ -58,6 +58,31 @@ class FacebookExtractor:
                 warnings=["No downloadable caption track was found."])
 
     def download_audio(self, url: str, template: str):
+        """Try independent yt-dlp format/extraction profiles before declaring failure."""
         url = validate_facebook_url(url)
-        with yt_dlp.YoutubeDL(self._options(format="bestaudio/best", outtmpl=template)) as ydl:
-            return ydl.extract_info(url, download=True) or {}
+        profiles = [
+            {"format": "bestaudio/best"},
+            {"format": "best"},
+            {"format": "bestvideo*+bestaudio/best"},
+        ]
+        errors = []
+        for index, profile in enumerate(profiles, 1):
+            options = self._options(
+                outtmpl=template,
+                retries=3,
+                fragment_retries=3,
+                extractor_retries=2,
+                file_access_retries=2,
+                socket_timeout=30,
+                **profile,
+            )
+            try:
+                with yt_dlp.YoutubeDL(options) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                if info:
+                    info["_fbtranscript_extraction_profile"] = index
+                    return info
+                errors.append(f"profile {index}: no metadata returned")
+            except Exception as exc:
+                errors.append(f"profile {index}: {type(exc).__name__}: {exc}")
+        raise RuntimeError("All Facebook audio extraction profiles failed: " + " | ".join(errors[-3:]))
