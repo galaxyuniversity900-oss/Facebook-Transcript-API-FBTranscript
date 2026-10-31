@@ -64,12 +64,22 @@ def _transcribe_whisper_cpp(url: str, language: str | None, translate_to: str | 
                           translation_language="en" if translated_text else None)
 
 def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = None, translate_to: str | None = None) -> Transcript:
-    if shutil.which(os.getenv("FBTRANSCRIPT_WHISPER_BIN", "whisper-cli")):
-        return _transcribe_whisper_cpp(url, language, translate_to)
+    """Run available recognition engines in order; a failed engine must not block the next."""
+    errors = []
+    binary = shutil.which(os.getenv("FBTRANSCRIPT_WHISPER_BIN", "whisper-cli"))
+    if binary:
+        try:
+            result = _transcribe_whisper_cpp(url, language, translate_to)
+            result.warnings.append("Recognition engine: whisper.cpp")
+            return result
+        except Exception as exc:
+            errors.append(f"whisper.cpp: {type(exc).__name__}: {exc}")
     try:
         from faster_whisper import WhisperModel
-    except ImportError as exc:
-        raise RuntimeError("No speech engine installed. On Termux run bash scripts/install-whisper-termux.sh; on desktop install the optional faster-whisper dependency.") from exc
+    except ImportError:
+        errors.append("faster-whisper: package is not installed")
+        raise RuntimeError("No recognition engine completed successfully. " + " | ".join(errors) +
+            ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; on desktop install faster-whisper.") from None
     with tempfile.TemporaryDirectory(prefix="fbtranscript-audio-") as tmp:
         template = str(Path(tmp) / "audio.%(ext)s")
         info = FacebookExtractor().download_audio(url, template)
@@ -89,5 +99,6 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
             translated_text = "\n".join(s.text.strip() for s in translated_chunks if s.text.strip()) or None
         return Transcript(source_url=url, title=info.get("title"), language=meta.language or "und",
                           language_name=meta.language, source=f"faster-whisper:{model_size}",
-                          segments=segments, translated_text=translated_text,
+                          segments=segments, warnings=["Recognition engine: faster-whisper"] + errors,
+                          translated_text=translated_text,
                           translation_language="en" if translated_text else None)
