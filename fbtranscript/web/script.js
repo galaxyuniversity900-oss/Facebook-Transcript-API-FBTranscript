@@ -58,17 +58,20 @@ document.querySelector("#copy").addEventListener("click",async function(){
  if(!current)return;await navigator.clipboard.writeText(current.segments.map(s=>s.text).join("\n"));
  document.querySelector("#copy").textContent="Copied";
 });
-document.querySelector("#format").addEventListener("change",async function(event){
+document.querySelector("#format").addEventListener("change",function(event){
  if(!current)return;
- try{
-  const response=await fetch("/api/v1/export/"+event.target.value,{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({url:currentUrl,whisper:false})});
-  if(!response.ok)throw new Error("Export failed");
-  const blob=await response.blob(),link=document.createElement("a");
-  link.href=URL.createObjectURL(blob);link.download="fbtranscript."+event.target.value;link.click();
-  URL.revokeObjectURL(link.href);
- }catch(error){alert(error.message)}
+ const format=event.target.value;
+ let body="",type="text/plain;charset=utf-8";
+ if(format==="json"){body=JSON.stringify(current,null,2);type="application/json"}
+ else if(format==="txt"){body=current.segments.map(s=>s.text).join("\n");}
+ else if(format==="srt"){body=current.segments.map((s,i)=>(i+1)+"\n"+subtitleStamp(s.start,true)+" --> "+subtitleStamp(s.start+s.duration,true)+"\n"+s.text).join("\n\n");type="application/x-subrip"}
+ else if(format==="vtt"){body="WEBVTT\n\n"+current.segments.map(s=>subtitleStamp(s.start,false)+" --> "+subtitleStamp(s.start+s.duration,false)+"\n"+s.text).join("\n\n");type="text/vtt"}
+ else{const escapeHtml=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));body="<!doctype html><meta charset=\"utf-8\"><title>Transcript</title><ol>"+current.segments.map(s=>"<li>"+escapeHtml(s.text)+"</li>").join("")+"</ol>";type="text/html"}
+ const blob=new Blob([body],{type:type}),link=document.createElement("a");
+ link.href=URL.createObjectURL(blob);link.download="fbtranscript."+format;link.click();URL.revokeObjectURL(link.href);
 });
+function subtitleStamp(n,comma){const ms=Math.max(0,Math.round(n*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),x=ms%1000;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")+(comma?",":".")+String(x).padStart(3,"0")}
+
 async function loadHistory(){
  const list=document.querySelector("#history-list");
  try{
