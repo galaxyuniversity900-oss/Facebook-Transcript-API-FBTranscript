@@ -1,25 +1,44 @@
-"""Typed transcript data models."""
-from pydantic import BaseModel, Field
+"""Small dependency-free transcript data models shared by all runtimes."""
+from dataclasses import asdict, dataclass
 
-class Segment(BaseModel):
-    start: float = Field(ge=0)
-    duration: float = Field(ge=0)
+
+@dataclass
+class Segment:
+    start: float
+    duration: float
     text: str
+
     @property
     def end(self) -> float:
         return self.start + self.duration
 
-class Transcript(BaseModel):
+    def model_dump(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class Transcript:
     source_url: str
     title: str | None = None
     language: str = "und"
     language_name: str | None = None
     source: str = "unknown"
-    segments: list[Segment] = Field(default_factory=list)
-    warnings: list[str] = Field(default_factory=list)
+    segments: list[Segment] | None = None
+    warnings: list[str] | None = None
+
+    def __post_init__(self):
+        if self.segments is None:
+            self.segments = []
+        if self.warnings is None:
+            self.warnings = []
+
     @property
     def text(self) -> str:
         return " ".join(s.text.strip() for s in self.segments if s.text.strip()).strip()
+
     @property
     def duration(self) -> float:
         return max((s.end for s in self.segments), default=0.0)
+
+    def model_dump(self) -> dict:
+        return asdict(self)
