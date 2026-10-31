@@ -16,7 +16,10 @@ def to_json(t: Transcript) -> str:
 def to_txt(t: Transcript, timestamps: bool = False) -> str:
     if timestamps:
         return "\n".join(f"[{stamp(s.start)}] {s.text}" for s in t.segments) + "\n"
-    return t.text + ("\n" if t.text else "")
+    original = t.text
+    translated = (t.translated_text or "").strip()
+    parts = [part for part in (original, ("[English translation]\n" + translated) if translated else "") if part]
+    return "\n\n".join(parts) + ("\n" if parts else "")
 
 def to_srt(t: Transcript) -> str:
     return "\n\n".join(f"{i}\n{stamp(s.start, True)} --> {stamp(s.end, True)}\n{s.text}" for i, s in enumerate(t.segments, 1))
