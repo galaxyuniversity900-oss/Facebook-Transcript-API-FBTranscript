@@ -13,7 +13,8 @@ form.addEventListener("submit",async function(event){
  submit.disabled=true;submit.textContent="Queueing…";results.hidden=true;
  try{
   const common={languages:["ar","en","all"],whisper:true,
-   language:document.querySelector("#language").value||null};
+   language:document.querySelector("#language").value||null,
+   translate_to:document.querySelector("#translate-to").value||null};
   const endpoint=urls.length>1?"/api/v1/jobs/batch":"/api/v1/jobs";
   const payload=urls.length>1?Object.assign({urls:urls},common):Object.assign({url:urls[0]},common);
   const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
@@ -50,6 +51,11 @@ function render(data){
  document.querySelector("#title").textContent=data.title||"Transcript";
  document.querySelector("#meta").textContent=[data.language,data.source,data.segments.length+" segments"].join(" · ");
  transcriptBox.textContent=data.segments.map(s=>"["+stamp(s.start)+"] "+s.text).join("\n\n")||"No transcript available.";
+ const translated=document.querySelector("#translated");
+ const translationTitle=document.querySelector("#translation-title");
+ translated.hidden=!data.translated_text;
+ translationTitle.hidden=!data.translated_text;
+ translated.textContent=data.translated_text||"";
  document.querySelector("#warnings").textContent=(data.warnings||[]).join(" ");
  results.scrollIntoView({behavior:"smooth",block:"start"});
 }
