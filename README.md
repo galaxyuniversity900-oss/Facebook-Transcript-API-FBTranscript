@@ -27,7 +27,10 @@ The Whisper setup compiles whisper.cpp locally and downloads a model. It require
 
 - Audio-first: downloads the video's audio, converts it to 16 kHz mono WAV with FFmpeg, then runs whisper.cpp.
 - Never silently substitutes captions, descriptions, or post text when speech recognition fails.
-- Arabic and English language selection, timestamps, TXT/JSON/SRT/VTT/HTML export.
+- Multilingual speech recognition with automatic language detection by default; manually pin Arabic or English when the audio is known to use one language.
+- Mixed-language speech can be transcribed by the multilingual model, but Whisper does not reliably label every language switch inside a single recording; the reported language is the detected dominant/initial language.
+- Optional second-pass translation of the recognized speech into English. Original transcript is retained separately. Whisper built-in translation targets English only; arbitrary target languages require a separately configured translation provider.
+- Timestamps, TXT/JSON/SRT/VTT/HTML export.
 - SQLite history at ~/.fbtranscript/jobs.sqlite3, batch jobs, retry, and recovery.
 - One background worker to limit phone CPU and memory use.
 - No root access and no APK required; the UI runs locally in the Android browser.
@@ -48,6 +51,7 @@ Optional desktop faster-whisper:
 ## CLI
 
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --format srt -o output.srt
+    fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --translate-to en --format json
     fbtranscript 'https://www.facebook.com/watch/?v=VIDEO_ID' --captions-only --format json
 
 ## Authorized cookies
