@@ -43,6 +43,7 @@ def _payload(data: dict) -> dict:
         "whisper": whisper,
         "model_size": str(data.get("model_size", "tiny")),
         "language": data.get("language"),
+        "translate_to": data.get("translate_to"),
     }
 
 
@@ -55,7 +56,7 @@ def _run_job(job_id: str) -> None:
         p = job["payload"]
         result = transcribe(p["url"], languages=p.get("languages"),
             whisper=p.get("whisper", True), model_size=p.get("model_size", "tiny"),
-            language=p.get("language"))
+            language=p.get("language"), translate_to=p.get("translate_to"))
         STORE.update(job_id, "completed", result=result.model_dump())
     except Exception as exc:
         STORE.update(job_id, "failed", error=str(exc))
