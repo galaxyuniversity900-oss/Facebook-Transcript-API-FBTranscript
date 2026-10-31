@@ -1,24 +1,9 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#171916"><title>FBTranscript</title>
-<link rel="stylesheet" href="/static/style.css">
-</head>
-<body><main class="shell">
-<header><div class="mark">FB<span>T</span></div><div><p class="eyebrow">LOCAL-FIRST TRANSCRIPTION</p><h1>FBTranscript</h1></div></header>
-<section class="intro"><p class="eyebrow">FACEBOOK VIDEO → TEXT</p><h2>Turn spoken content into<br><em>searchable text.</em></h2>
-<p>Extract available captions first. If none exist, optionally use local Whisper speech recognition.</p></section>
-<section class="panel"><form id="form">
-<label for="url">Facebook video URL</label><div class="url-row">
-<input id="url" type="url" placeholder="https://www.facebook.com/watch/?v=..." required>
-<button id="submit" type="submit">Transcribe ↗</button></div>
-<details class="batch"><summary>Process multiple videos</summary><textarea id="batch-urls" rows="4" placeholder="Paste one Facebook video URL per line"></textarea></details><div class="options"><label class="check"><input id="whisper" type="checkbox" checked> Use Whisper fallback</label>
-<label for="language">Speech language</label><select id="language"><option value="">Auto detect</option><option value="ar">Arabic</option><option value="en">English</option></select></div>
-</form><p class="notice">Only process videos you own or are authorized to access. Private-content access and privacy bypass are not supported.</p></section>
-<section id="results" class="results" hidden><div class="result-head"><div><p class="eyebrow">TRANSCRIPT RESULT</p><h3 id="title">Transcript</h3></div>
-<select id="format"><option value="txt">TXT</option><option value="srt">SRT</option><option value="vtt">VTT</option><option value="json">JSON</option><option value="html">HTML</option></select></div>
-<div id="meta" class="meta"></div><div id="transcript" class="transcript"></div><p id="warnings" class="warnings"></p>
-<button id="copy" class="copy">Copy transcript</button></section>
-<section class="history"><div class="result-head"><h3>Recent jobs</h3><button id="refresh-history" class="copy" type="button">Refresh</button></div><div id="history-list"></div></section><footer>Runs on your own machine · No hosted transcription account required</footer>
-</main><script src="/static/script.js" defer></script></body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#171916"><title>FBTranscript</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><main class="shell"><header><div class="mark">FB<span>T</span></div><div><p class="eyebrow">LOCAL-FIRST TRANSCRIPTION</p><h1>FBTranscript</h1></div></header>
+<section class="intro"><p class="eyebrow">FACEBOOK VIDEO → TEXT</p><h2>Convert spoken audio into<br><em>searchable text.</em></h2><p>Downloads the video's audio and transcribes actual speech with Whisper. Page descriptions and written captions are not used as transcript results.</p></section>
+<section class="panel"><form id="form"><label for="url">Facebook video URL</label><div class="url-row"><input id="url" type="url" placeholder="https://www.facebook.com/watch/?v=..." required><button id="submit" type="submit">Transcribe audio ↗</button></div>
+<details class="batch"><summary>Process multiple videos</summary><textarea id="batch-urls" rows="4" placeholder="Paste one Facebook video URL per line"></textarea></details><div class="options"><label for="language">Speech language</label><select id="language"><option value="">Auto detect</option><option value="ar">Arabic</option><option value="en">English</option></select></div></form>
+<p class="notice">Audio transcription requires the local Whisper engine and model. Only process videos you own or are authorized to access.</p></section>
+<section id="results" class="results" hidden><div class="result-head"><div><p class="eyebrow">AUDIO TRANSCRIPT</p><h3 id="title">Transcript</h3></div><select id="format"><option value="txt">TXT</option><option value="srt">SRT</option><option value="vtt">VTT</option><option value="json">JSON</option><option value="html">HTML</option></select></div><div id="meta" class="meta"></div><div id="transcript" class="transcript"></div><p id="warnings" class="warnings"></p><button id="copy" class="copy">Copy transcript</button></section>
+<section class="history"><div class="result-head"><h3>Recent jobs</h3><button id="refresh-history" class="copy" type="button">Refresh</button></div><div id="history-list"></div></section><footer>Runs on your own machine · Audio-first speech recognition</footer></main><script src="/static/script.js" defer></script></body></html>

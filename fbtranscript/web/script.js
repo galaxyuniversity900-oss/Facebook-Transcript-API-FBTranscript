@@ -12,7 +12,7 @@ form.addEventListener("submit",async function(event){
  currentUrl=urls[0];
  submit.disabled=true;submit.textContent="Queueing…";results.hidden=true;
  try{
-  const common={languages:["ar","en","all"],whisper:document.querySelector("#whisper").checked,
+  const common={languages:["ar","en","all"],whisper:true,
    language:document.querySelector("#language").value||null};
   const endpoint=urls.length>1?"/api/v1/jobs/batch":"/api/v1/jobs";
   const payload=urls.length>1?Object.assign({urls:urls},common):Object.assign({url:urls[0]},common);
