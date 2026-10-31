@@ -8,7 +8,7 @@ from pathlib import Path
 from ..extractors.facebook import FacebookExtractor, parse_vtt
 from ..models import Segment, Transcript
 
-def _transcribe_whisper_cpp(url: str, language: str | None) -> Transcript:
+def _transcribe_whisper_cpp(url: str, language: str | None, translate_to: str | None = None) -> Transcript:
     binary = shutil.which(os.getenv("FBTRANSCRIPT_WHISPER_BIN", "whisper-cli"))
     model = Path(os.getenv("FBTRANSCRIPT_WHISPER_MODEL", str(Path.home() / ".cache" / "fbtranscript" / "ggml-tiny.bin"))).expanduser()
     ffmpeg = shutil.which("ffmpeg")
@@ -44,12 +44,26 @@ def _transcribe_whisper_cpp(url: str, language: str | None) -> Transcript:
             raise RuntimeError("No speech was recognized in the video's audio.")
         detected = re.search(r"auto-detected language:\s*([\w-]+)", completed.stderr + "\n" + completed.stdout, re.I)
         detected_language = language or (detected.group(1).lower() if detected else "auto")
+        translated_text = None
+        if translate_to:
+            if translate_to != "en":
+                raise ValueError("Whisper's built-in translation currently supports English only.")
+            translated_prefix = root / "translated"
+            translated_command = command + ["-tr", "-of", str(translated_prefix)]
+            translated = subprocess.run(translated_command, capture_output=True, text=True, timeout=7200)
+            translated_vtt = translated_prefix.with_suffix(".vtt")
+            if translated.returncode != 0 or not translated_vtt.is_file():
+                raise RuntimeError("Whisper translation failed: " + translated.stderr[-1600:])
+            translated_segments = parse_vtt(translated_vtt)
+            translated_text = "\n".join(s.text for s in translated_segments) or None
         return Transcript(source_url=url, title=info.get("title"), language=detected_language,
-                          language_name=detected_language, source="whisper.cpp", segments=segments)
+                          language_name=detected_language, source="whisper.cpp", segments=segments,
+                          translated_text=translated_text,
+                          translation_language="en" if translated_text else None)
 
-def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = None) -> Transcript:
+def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = None, translate_to: str | None = None) -> Transcript:
     if shutil.which(os.getenv("FBTRANSCRIPT_WHISPER_BIN", "whisper-cli")):
-        return _transcribe_whisper_cpp(url, language)
+        return _transcribe_whisper_cpp(url, language, translate_to)
     try:
         from faster_whisper import WhisperModel
     except ImportError as exc:
@@ -65,4 +79,13 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
         segments = [Segment(start=float(s.start), duration=max(0, float(s.end-s.start)), text=s.text.strip()) for s in chunks if s.text.strip()]
         if not segments:
             raise RuntimeError("No speech was recognized in the video's audio.")
-        return Transcript(source_url=url, title=info.get("title"), language=meta.language or "und", language_name=meta.language, source=f"faster-whisper:{model_size}", segments=segments)
+        translated_text = None
+        if translate_to:
+            if translate_to != "en":
+                raise ValueError("Whisper's built-in translation currently supports English only.")
+            translated_chunks, _ = model.transcribe(str(audio), language=language, task="translate", vad_filter=True)
+            translated_text = "\n".join(s.text.strip() for s in translated_chunks if s.text.strip()) or None
+        return Transcript(source_url=url, title=info.get("title"), language=meta.language or "und",
+                          language_name=meta.language, source=f"faster-whisper:{model_size}",
+                          segments=segments, translated_text=translated_text,
+                          translation_language="en" if translated_text else None)
