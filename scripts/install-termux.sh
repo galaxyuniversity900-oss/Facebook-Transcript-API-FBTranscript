@@ -6,7 +6,7 @@ APP_DIR="${FBTRANSCRIPT_DIR:-$HOME/FBTranscript}"
 
 echo "[1/5] Updating Termux packages..."
 pkg update -y
-pkg install -y python git ffmpeg
+pkg install -y python git
 
 echo "[2/5] Getting FBTranscript..."
 if [ -d "$APP_DIR/.git" ]; then
