@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -21,11 +22,19 @@ class JobStore:
                 result TEXT, error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
             )""")
 
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.path, timeout=20)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA busy_timeout=20000")
-        return db
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     def create(self, payload: dict) -> dict:
         job_id = uuid4().hex
