@@ -78,8 +78,15 @@ def transcribe_audio(url: str, model_size: str = "tiny", language: str | None = 
         from faster_whisper import WhisperModel
     except ImportError:
         errors.append("faster-whisper: package is not installed")
+        try:
+            from .hosted import transcribe_hosted
+            result = transcribe_hosted(url, language, translate_to)
+            result.warnings[:0] = errors
+            return result
+        except Exception as exc:
+            errors.append(f"hosted providers: {type(exc).__name__}: {exc}")
         raise RuntimeError("No recognition engine completed successfully. " + " | ".join(errors) +
-            ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; on desktop install faster-whisper.") from None
+            ". On Termux install whisper.cpp with scripts/install-whisper-termux.sh; optional hosted fallback needs GROQ_API_KEY or OPENAI_API_KEY.") from None
     with tempfile.TemporaryDirectory(prefix="fbtranscript-audio-") as tmp:
         template = str(Path(tmp) / "audio.%(ext)s")
         info = FacebookExtractor().download_audio(url, template)
