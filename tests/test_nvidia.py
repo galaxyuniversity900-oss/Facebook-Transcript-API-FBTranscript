@@ -33,3 +33,14 @@ def test_discovery_does_not_claim_global_catalog(monkeypatch):
 def test_endpoint_url_normalization():
     assert hosted._api_url("https://nim.example/v1", "/v1/audio/transcriptions") == "https://nim.example/v1/audio/transcriptions"
     assert hosted._api_url("https://nim.example", "/v1/audio/transcriptions") == "https://nim.example/v1/audio/transcriptions"
+
+
+def test_discovery_reads_speech_nim_metadata_model_profile(monkeypatch):
+    payloads = [
+        {"data": [{"id": "unknown"}]},
+        {"modelInfo": [{"shortName": "parakeet-1-1b-ctc-riva:latest"}]},
+    ]
+    monkeypatch.setattr(hosted, "_http_json", lambda url, key: payloads.pop(0))
+    models = hosted.discover_asr_models("https://nim.example", "secret", "ar")
+    assert models == [{"id": "parakeet-1-1b-ctc-riva:latest",
+                       "family": "parakeet-ctc", "rank": 31}]
