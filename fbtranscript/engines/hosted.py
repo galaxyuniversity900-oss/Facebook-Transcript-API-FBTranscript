@@ -15,6 +15,10 @@ from ..models import Segment, Transcript
 
 def _multipart_request(url: str, api_key: str, model: str, audio_path: Path,
                       language: str | None, translate: bool = False) -> dict:
+    max_mb = int(os.getenv("FBTRANSCRIPT_MAX_UPLOAD_MB", "24"))
+    size_mb = audio_path.stat().st_size / (1024 * 1024)
+    if size_mb > max_mb:
+        raise RuntimeError(f"Audio is {size_mb:.1f} MB; hosted upload limit is {max_mb} MB.")
     boundary = "----FBTranscriptBoundary7MA4YWxkTrZu0gW"
     fields = {"model": model, "response_format": "verbose_json"}
     if language:
@@ -80,7 +84,7 @@ def transcribe_hosted(url: str, language: str | None = None,
                     if translate_to != "en":
                         raise ValueError("Built-in hosted Whisper translation supports English only.")
                     translated = _multipart_request(base.rstrip("/") + "/audio/translations",
-                                                    key, model, audio, None, True)
+                                                    key, recognition_model, audio, None, True)
                     translated_text = (translated.get("text") or "").strip() or None
                 return Transcript(
                     source_url=url, title=info.get("title"),
