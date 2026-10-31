@@ -89,6 +89,16 @@ async function loadHistory(){
     }else alert("Job status: "+detail.status+(detail.error?"\n"+detail.error:""));
    });
    list.appendChild(button);
+   if(job.status==="failed"){
+    const retry=document.createElement("button");retry.type="button";retry.className="history-item";
+    retry.textContent="Retry job "+job.id.slice(0,8);
+    retry.addEventListener("click",async()=>{
+     const response=await fetch("/api/v1/jobs/"+job.id+"/retry",{method:"POST"});
+     if(!response.ok){const error=await response.json();alert(error.detail||"Retry failed");return}
+     await loadHistory();
+    });
+    list.appendChild(retry);
+   }
   });
   if(!data.jobs.length)list.textContent="No jobs yet.";
  }catch(error){list.textContent="History unavailable: "+error.message}
