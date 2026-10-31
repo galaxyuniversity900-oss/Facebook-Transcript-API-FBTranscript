@@ -13,3 +13,8 @@ button{border:0;background:var(--accent);color:#171916;padding:0 20px;font-weigh
 .transcript{white-space:pre-wrap;max-height:520px;overflow:auto;padding:18px 0}.warnings{color:var(--danger);font-size:12px}.copy{padding:11px 16px}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:32px 0}
 @media(max-width:580px){.shell{padding:22px 15px}.intro{padding:55px 0 25px}.url-row{flex-direction:column}.url-row button{padding:13px}.panel,.results{padding:17px}.options{gap:12px}.intro h2{letter-spacing:-2px}}
+
+.batch{margin-top:18px;border-top:1px solid var(--line);padding-top:13px;color:var(--muted);font-size:12px}
+.batch summary{cursor:pointer}.batch textarea{display:block;width:100%;margin-top:12px;background:#151713;border:1px solid var(--line);color:var(--text);padding:12px;font:inherit;resize:vertical}
+.history{border:1px solid var(--line);padding:18px;margin-top:22px;background:var(--panel)}
+.history-item{display:block;width:100%;text-align:left;padding:10px;margin-top:7px;background:#171916;color:var(--text);border:1px solid var(--line);font-size:11px;font-weight:400;overflow-wrap:anywhere}
