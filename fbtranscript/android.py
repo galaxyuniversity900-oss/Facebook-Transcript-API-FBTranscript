@@ -35,7 +35,7 @@ def _payload(data: dict) -> dict:
     languages = data.get("languages", ["ar", "en", "all"])
     if not isinstance(languages, list) or not all(isinstance(x, str) for x in languages):
         raise ValueError("languages must be a list of strings.")
-    whisper = data.get("whisper", False)
+    whisper = data.get("whisper", True)
     if not isinstance(whisper, bool):
         raise ValueError("whisper must be true or false.")
     return {
@@ -54,7 +54,7 @@ def _run_job(job_id: str) -> None:
     try:
         p = job["payload"]
         result = transcribe(p["url"], languages=p.get("languages"),
-            whisper=p.get("whisper", False), model_size=p.get("model_size", "tiny"),
+            whisper=p.get("whisper", True), model_size=p.get("model_size", "tiny"),
             language=p.get("language"))
         STORE.update(job_id, "completed", result=result.model_dump())
     except Exception as exc:
