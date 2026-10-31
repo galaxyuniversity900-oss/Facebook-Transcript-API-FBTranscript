@@ -49,7 +49,9 @@ def _transcribe_whisper_cpp(url: str, language: str | None, translate_to: str | 
             if translate_to != "en":
                 raise ValueError("Whisper's built-in translation currently supports English only.")
             translated_prefix = root / "translated"
-            translated_command = command + ["-tr", "-of", str(translated_prefix)]
+            translated_command = command.copy()
+            translated_command[translated_command.index("-of") + 1] = str(translated_prefix)
+            translated_command.append("-tr")
             translated = subprocess.run(translated_command, capture_output=True, text=True, timeout=7200)
             translated_vtt = translated_prefix.with_suffix(".vtt")
             if translated.returncode != 0 or not translated_vtt.is_file():
