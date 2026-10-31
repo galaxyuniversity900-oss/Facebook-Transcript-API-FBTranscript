@@ -9,6 +9,11 @@ def test_android_payload_defaults_to_audio_transcription():
     assert payload["whisper"] is True
     assert payload["model_size"] == "tiny"
     assert payload["languages"] == ["ar", "en", "all"]
+    assert payload["translate_to"] is None
+
+def test_android_payload_accepts_english_translation():
+    payload = _payload({"translate_to": "en"})
+    assert payload["translate_to"] == "en"
 
 def test_android_payload_rejects_invalid_types():
     try:
@@ -32,6 +37,7 @@ def test_android_http_health_and_web_assets():
         with urlopen(base + "/static/script.js") as response:
             script = response.read()
             assert b"waitForJob" in script and b"whisper:true" in script
+            assert b"translate_to" in script
             assert b'querySelector("#whisper")' not in script
     finally:
         server.shutdown()
