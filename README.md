@@ -64,6 +64,25 @@ Treat the cookies file like a password. Never commit or share it. This option do
 - fbtranscript/web/ — browser interface.
 - tests/ — offline unit tests.
 
+
+## Background jobs, batches, and history
+
+Long jobs can be submitted without holding the HTTP request open:
+
+    curl -X POST http://127.0.0.1:8787/api/v1/jobs \
+      -H 'Content-Type: application/json' \
+      -d '{"url":"https://www.facebook.com/watch/?v=VIDEO_ID","whisper":true}'
+
+The response includes a job ID. Check its state at /api/v1/jobs/JOB_ID and retrieve the transcript from /api/v1/jobs/JOB_ID/result when status is completed. List recent jobs at /api/v1/jobs. Retry a failed job with POST /api/v1/jobs/JOB_ID/retry.
+
+For a batch, send up to 25 video URLs to POST /api/v1/jobs/batch:
+
+    curl -X POST http://127.0.0.1:8787/api/v1/jobs/batch \
+      -H 'Content-Type: application/json' \
+      -d '{"urls":["https://www.facebook.com/watch/?v=ID1","https://www.facebook.com/watch/?v=ID2"],"whisper":false}'
+
+Job metadata and transcript results are stored in SQLite. By default the database is ~/.fbtranscript/jobs.sqlite3. Set FBTRANSCRIPT_DB to choose another path. If the process stops while a job is running, the next startup marks that job failed so it can be retried. The in-process background worker is suitable for a local single-user service; it is not a distributed queue for multi-worker production deployments.
+
 ## Known limitations
 Facebook does not expose captions for every video. yt-dlp support can change when Facebook changes its site. Captions may be absent, inaccessible, or in an unexpected language. Whisper is a speech-recognition fallback, not a way to retrieve access-restricted captions. This initial implementation handles a request synchronously; persistent job queues, batch processing, resumable jobs, and history storage are not included yet.
 
